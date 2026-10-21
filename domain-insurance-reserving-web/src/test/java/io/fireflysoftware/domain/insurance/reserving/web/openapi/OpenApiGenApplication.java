@@ -33,7 +33,7 @@ import org.springframework.context.annotation.ComponentScan;
 info = @Info(
         title = "Domain Insurance Reserving API",
         version = "1.0.0",
-        description = "Orchestrates reserve snapshots through core-insurance-reserving. It records snapshot status through the reserving core. It does not build a reporting extract, and it does not certify IFRS 17 or Solvency II.",
+        description = "Orchestrates reserve snapshots through core-insurance-reserving. It creates, updates, changes status, and closes reserve snapshots through the reserving core. It does not build a reporting extract, and it does not certify IFRS 17 or Solvency II.",
         contact = @Contact(
                 name = "Firefly Software Foundation",
                 email = "dev@fireflysoftware.io"

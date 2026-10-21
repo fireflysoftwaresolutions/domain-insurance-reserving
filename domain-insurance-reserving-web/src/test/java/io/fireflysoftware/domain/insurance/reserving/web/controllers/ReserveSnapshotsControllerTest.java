@@ -18,6 +18,7 @@ package io.fireflysoftware.domain.insurance.reserving.web.controllers;
 
 import io.fireflysoftware.core.insurance.reserving.sdk.model.ReserveSnapshotDTO;
 import io.fireflysoftware.domain.insurance.reserving.core.services.ReservingService;
+import io.fireflysoftware.domain.insurance.reserving.interfaces.dtos.ReasonRequest;
 import io.fireflysoftware.domain.insurance.reserving.interfaces.dtos.StatusChangeRequest;
 import org.fireflyframework.web.error.config.ErrorHandlingProperties;
 import org.fireflyframework.web.error.converter.ExceptionConverterService;
@@ -107,5 +108,46 @@ class ReserveSnapshotsControllerTest {
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(ReserveSnapshotDTO.class);
+    }
+
+    @Test
+    void update_returns200() {
+        UUID id = UUID.randomUUID();
+        when(service.update(any())).thenReturn(Mono.just(new ReserveSnapshotDTO(id)));
+
+        webTestClient.put()
+                .uri("/api/v1/reserve-snapshots/{id}", id)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(new ReserveSnapshotDTO())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(ReserveSnapshotDTO.class);
+    }
+
+    @Test
+    void accept_returns200() {
+        UUID id = UUID.randomUUID();
+        when(service.accept(any(), any())).thenReturn(Mono.just(new ReserveSnapshotDTO(id)));
+        ReasonRequest request = new ReasonRequest();
+        request.setStatusReason("Caller request");
+
+        webTestClient.post()
+                .uri("/api/v1/reserve-snapshots/{id}/accept", id)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(ReserveSnapshotDTO.class);
+    }
+
+    @Test
+    void remove_returns204() {
+        UUID id = UUID.randomUUID();
+        when(service.remove(id)).thenReturn(Mono.empty());
+
+        webTestClient.delete()
+                .uri("/api/v1/reserve-snapshots/{id}", id)
+                .exchange()
+                .expectStatus().isNoContent();
     }
 }

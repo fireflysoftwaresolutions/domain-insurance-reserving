@@ -18,8 +18,10 @@ package io.fireflysoftware.domain.insurance.reserving.web.controllers;
 
 import io.fireflysoftware.core.insurance.reserving.sdk.model.ReserveSnapshotDTO;
 import io.fireflysoftware.domain.insurance.reserving.core.commands.CreateReserveSnapshotCommand;
+import io.fireflysoftware.domain.insurance.reserving.core.commands.UpdateReserveSnapshotCommand;
 import io.fireflysoftware.domain.insurance.reserving.core.commands.UpdateReserveSnapshotStatusCommand;
 import io.fireflysoftware.domain.insurance.reserving.core.services.ReservingService;
+import io.fireflysoftware.domain.insurance.reserving.interfaces.dtos.ReasonRequest;
 import io.fireflysoftware.domain.insurance.reserving.interfaces.dtos.StatusChangeRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -31,6 +33,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -98,5 +101,49 @@ public class ReserveSnapshotsController {
         return service.updateStatus(new UpdateReserveSnapshotStatusCommand(reserveSnapshotId, request.getStatus(), request.getStatusReason()))
                 .map(ResponseEntity::ok)
                 .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
+    }
+
+    @Operation(summary = "Update reserve snapshot", description = "Runs the update saga against core-insurance-reserving. Status is left unchanged.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Updated",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ReserveSnapshotDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Not found", content = @Content)
+    })
+    @PutMapping(value = "/{reserveSnapshotId}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Mono<ResponseEntity<ReserveSnapshotDTO>> update(
+            @Parameter(description = "Core identifier", required = true) @PathVariable UUID reserveSnapshotId,
+            @RequestBody ReserveSnapshotDTO body) {
+        return service.update(new UpdateReserveSnapshotCommand(reserveSnapshotId, body))
+                .map(ResponseEntity::ok)
+                .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
+    }
+
+    @Operation(summary = "Accept reserve snapshot", description = "Accepts a reserve snapshot through the reserving core.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Updated",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ReserveSnapshotDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Not found", content = @Content)
+    })
+    @PostMapping(value = "/{reserveSnapshotId}/accept", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Mono<ResponseEntity<ReserveSnapshotDTO>> accept(
+            @Parameter(description = "Core identifier", required = true) @PathVariable UUID reserveSnapshotId,
+            @RequestBody ReasonRequest request) {
+        return service.accept(reserveSnapshotId, request.getStatusReason())
+                .map(ResponseEntity::ok)
+                .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
+    }
+
+    @Operation(summary = "Remove reserve snapshot", description = "Deletes the record through core-insurance-reserving when that core allows removal.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Removed"),
+            @ApiResponse(responseCode = "404", description = "Not found", content = @Content)
+    })
+    @DeleteMapping("/{reserveSnapshotId}")
+    public Mono<ResponseEntity<Void>> remove(
+            @Parameter(description = "Core identifier", required = true) @PathVariable UUID reserveSnapshotId) {
+        return service.remove(reserveSnapshotId)
+                .thenReturn(ResponseEntity.noContent().build());
     }
 }

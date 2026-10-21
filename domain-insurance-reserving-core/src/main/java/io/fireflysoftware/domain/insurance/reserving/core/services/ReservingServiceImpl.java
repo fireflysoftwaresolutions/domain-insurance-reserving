@@ -20,7 +20,10 @@ import io.fireflysoftware.core.insurance.reserving.sdk.model.ReserveSnapshotDTO;
 import io.fireflysoftware.domain.insurance.reserving.core.commands.CreateReserveSnapshotCommand;
 import io.fireflysoftware.domain.insurance.reserving.core.commands.GetReserveSnapshotQuery;
 import io.fireflysoftware.domain.insurance.reserving.core.commands.UpdateReserveSnapshotStatusCommand;
+import io.fireflysoftware.domain.insurance.reserving.core.commands.UpdateReserveSnapshotCommand;
+import io.fireflysoftware.domain.insurance.reserving.core.commands.RemoveReserveSnapshotCommand;
 import io.fireflysoftware.domain.insurance.reserving.core.constants.ReserveSnapshotSagaConstants;
+import org.fireflyframework.cqrs.command.CommandBus;
 import org.fireflyframework.cqrs.query.QueryBus;
 import org.fireflyframework.orchestration.saga.engine.SagaEngine;
 import org.fireflyframework.orchestration.saga.engine.SagaResult;
@@ -38,10 +41,12 @@ public class ReservingServiceImpl implements ReservingService {
 
     private final SagaEngine sagaEngine;
     private final QueryBus queryBus;
+    private final CommandBus commandBus;
 
-    public ReservingServiceImpl(SagaEngine sagaEngine, QueryBus queryBus) {
+    public ReservingServiceImpl(SagaEngine sagaEngine, QueryBus queryBus, CommandBus commandBus) {
         this.sagaEngine = sagaEngine;
         this.queryBus = queryBus;
+        this.commandBus = commandBus;
     }
 
     @Override
@@ -66,6 +71,29 @@ public class ReservingServiceImpl implements ReservingService {
     @Override
     public Mono<ReserveSnapshotDTO> get(UUID reserveSnapshotId) {
         return queryBus.query(new GetReserveSnapshotQuery(reserveSnapshotId));
+    }
+
+
+    @Override
+    public Mono<ReserveSnapshotDTO> update(UpdateReserveSnapshotCommand command) {
+        StepInputs inputs = StepInputs.builder()
+                .forStepId(ReserveSnapshotSagaConstants.STEP_RETRIEVE_FOR_UPDATE, new GetReserveSnapshotQuery(command.reserveSnapshotId()))
+                .forStepId(ReserveSnapshotSagaConstants.STEP_UPDATE_RECORD, command)
+                .build();
+        return sagaEngine.execute(ReserveSnapshotSagaConstants.SAGA_UPDATE_RECORD, inputs)
+                .flatMap(result -> outcome(result, ReserveSnapshotSagaConstants.STEP_UPDATE_RECORD, ReserveSnapshotDTO.class));
+    }
+
+    @Override
+    public Mono<ReserveSnapshotDTO> accept(UUID reserveSnapshotId, String statusReason) {
+        return updateStatus(new UpdateReserveSnapshotStatusCommand(reserveSnapshotId, "ACCEPTED", statusReason));
+    }
+
+    @Override
+    public Mono<Void> remove(UUID reserveSnapshotId) {
+        return get(reserveSnapshotId)
+                .switchIfEmpty(Mono.error(new IllegalStateException("Reserve snapshot was not found")))
+                .flatMap(current -> commandBus.send(new RemoveReserveSnapshotCommand(reserveSnapshotId)));
     }
 
     private static <T> Mono<T> outcome(SagaResult result, String stepId, Class<T> type) {

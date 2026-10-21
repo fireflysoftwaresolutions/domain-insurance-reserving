@@ -2,8 +2,9 @@ openapi: 3.0.1
 info:
   title: Domain Insurance Reserving API
   description: "Orchestrates reserve snapshots through core-insurance-reserving. It\
-    \ records snapshot status through the reserving core. It does not build a reporting\
-    \ extract, and it does not certify IFRS 17 or Solvency II."
+    \ creates, updates, changes status, and closes reserve snapshots through the reserving\
+    \ core. It does not build a reporting extract, and it does not certify IFRS 17\
+    \ or Solvency II."
   contact:
     name: Firefly Software Foundation
     email: dev@fireflysoftware.io
@@ -54,36 +55,6 @@ paths:
                 $ref: "#/components/schemas/ReserveSnapshotDTO"
         "404":
           description: Not found
-  /api/v1/reserve-snapshots:
-    post:
-      tags:
-      - Reserving
-      summary: Create reserve snapshot
-      description: Runs the register saga against core-insurance-reserving.
-      operationId: create
-      parameters:
-      - name: X-Idempotency-Key
-        in: header
-        description: "Unique key for idempotent requests. If provided, ensures that\
-          \ identical requests with the same key will only be processed once."
-        required: false
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ReserveSnapshotDTO"
-        required: true
-      responses:
-        "201":
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ReserveSnapshotDTO"
-        "400":
-          description: Invalid request
   /api/v1/reserve-snapshots/{reserveSnapshotId}:
     get:
       tags:
@@ -115,6 +86,137 @@ paths:
                 $ref: "#/components/schemas/ReserveSnapshotDTO"
         "404":
           description: Not found
+    put:
+      tags:
+      - Reserving
+      summary: Update reserve snapshot
+      description: Runs the update saga against core-insurance-reserving. Status is
+        left unchanged.
+      operationId: update
+      parameters:
+      - name: reserveSnapshotId
+        in: path
+        description: Core identifier
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReserveSnapshotDTO"
+        required: true
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReserveSnapshotDTO"
+        "404":
+          description: Not found
+    delete:
+      tags:
+      - Reserving
+      summary: Remove reserve snapshot
+      description: Deletes the record through core-insurance-reserving when that core
+        allows removal.
+      operationId: remove
+      parameters:
+      - name: reserveSnapshotId
+        in: path
+        description: Core identifier
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Removed
+        "404":
+          description: Not found
+  /api/v1/reserve-snapshots/{reserveSnapshotId}/accept:
+    post:
+      tags:
+      - Reserving
+      summary: Accept reserve snapshot
+      description: Accepts a reserve snapshot through the reserving core.
+      operationId: accept
+      parameters:
+      - name: reserveSnapshotId
+        in: path
+        description: Core identifier
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReasonRequest"
+        required: true
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReserveSnapshotDTO"
+        "404":
+          description: Not found
+  /api/v1/reserve-snapshots:
+    post:
+      tags:
+      - Reserving
+      summary: Create reserve snapshot
+      description: Runs the register saga against core-insurance-reserving.
+      operationId: create
+      parameters:
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReserveSnapshotDTO"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReserveSnapshotDTO"
+        "400":
+          description: Invalid request
 components:
   schemas:
     StatusChangeRequest:
@@ -174,3 +276,8 @@ components:
           type: string
           format: date-time
           nullable: true
+    ReasonRequest:
+      type: object
+      properties:
+        statusReason:
+          type: string

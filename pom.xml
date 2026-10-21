@@ -15,7 +15,7 @@
     <name>domain-insurance-reserving</name>
     <version>26.10.3</version>
     <packaging>pom</packaging>
-    <description>Orchestrates reserve snapshots and status changes through the reserving core. Developed by the Firefly Software Foundation.</description>
+    <description>Orchestrates reserve snapshot create, update, status, and close commands through the reserving core. Developed by the Firefly Software Foundation.</description>
     <url>https://openplatform.fireflysoftware.io/domain-insurance-reserving</url>
 
     <modules>

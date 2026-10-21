@@ -19,6 +19,7 @@ package io.fireflysoftware.domain.insurance.reserving.core.services;
 import io.fireflysoftware.core.insurance.reserving.sdk.model.ReserveSnapshotDTO;
 import io.fireflysoftware.domain.insurance.reserving.core.commands.CreateReserveSnapshotCommand;
 import io.fireflysoftware.domain.insurance.reserving.core.commands.UpdateReserveSnapshotStatusCommand;
+import io.fireflysoftware.domain.insurance.reserving.core.commands.UpdateReserveSnapshotCommand;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
@@ -51,4 +52,29 @@ public interface ReservingService {
      * @return the record, or empty when the core has none
      */
     Mono<ReserveSnapshotDTO> get(UUID reserveSnapshotId);
+
+    /**
+     * Updates fields on a reserve snapshot and leaves its status unchanged.
+     *
+     * @param command the update
+     * @return the record returned by the core
+     */
+    Mono<ReserveSnapshotDTO> update(UpdateReserveSnapshotCommand command);
+
+    /**
+     * Accepts a reserve snapshot through the reserving core.
+     *
+     * @param reserveSnapshotId the core identifier
+     * @param statusReason optional reason stored by the status saga when the core keeps one
+     * @return the updated record
+     */
+    Mono<ReserveSnapshotDTO> accept(UUID reserveSnapshotId, String statusReason);
+
+    /**
+     * Deletes a reserve snapshot when the core lifecycle allows removal.
+     *
+     * @param reserveSnapshotId the core identifier
+     * @return completion when the core has deleted the record
+     */
+    Mono<Void> remove(UUID reserveSnapshotId);
 }

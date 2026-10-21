@@ -44,6 +44,14 @@ public final class ReserveSnapshotSagaConstants {
     public static final String CTX_RECORD = "reserveSnapshotIdRecord";
     public static final String CTX_PREVIOUS_STATUS = "previousReserveSnapshotStatus";
 
+
+    public static final String SAGA_UPDATE_RECORD = "UpdateReserveSnapshotSaga";
+    public static final String STEP_RETRIEVE_FOR_UPDATE = "retrieveReserveSnapshotForUpdate";
+    public static final String STEP_UPDATE_RECORD = "updateReserveSnapshot";
+    public static final String COMPENSATE_RESTORE_RECORD = "restoreReserveSnapshot";
+    public static final String EVENT_RECORD_UPDATED = "snapshots.updated";
+    public static final String CTX_PREVIOUS_RECORD = "previousReserveSnapshotRecord";
+
     private ReserveSnapshotSagaConstants() {
     }
 }
