@@ -72,7 +72,7 @@ Status values accepted by the core: `DRAFT`, `SUBMITTED`, `ACCEPTED`.
 
 - Java 25
 - Apache Maven 3.9+
-- `core-insurance-reserving-sdk` 26.10.5
+- `core-insurance-reserving-sdk` 26.10.6
 - Apache Kafka on `localhost:9092` when event publishing is left at the default
 
 ### Environment
